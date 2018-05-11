@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BubbleChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/9.0.4">
+   <children>
+      <BorderPane prefHeight="200.0" prefWidth="200.0">
+         <top>
+            <Button mnemonicParsing="false" text="Button" BorderPane.alignment="CENTER" />
+         </top>
+         <bottom>
+            <Button mnemonicParsing="false" text="Button" BorderPane.alignment="CENTER" />
+         </bottom>
+         <center>
+            <BubbleChart BorderPane.alignment="CENTER">
+              <xAxis>
+                <NumberAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </BubbleChart>
+         </center>
+      </BorderPane>
+   </children>
+</AnchorPane>

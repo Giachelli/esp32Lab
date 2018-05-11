@@ -11,6 +11,14 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/9.0.4" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.prova">
    <children>
+      <GridPane fx:id="giac" prefHeight="400.0" prefWidth="500.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+      </GridPane>
       <GridPane>
          <children>
             <Label prefHeight="45.0" prefWidth="500.0" text="Configurazione disposizione ESP32" />
@@ -27,7 +35,7 @@
       <ButtonBar layoutX="293.0" layoutY="354.0" prefHeight="45.0" prefWidth="200.0" AnchorPane.bottomAnchor="1.0" AnchorPane.rightAnchor="7.0">
          <buttons>
           <Button mnemonicParsing="false" onAction="#addNewESP" text="New" />
-            <Button mnemonicParsing="false" text="Start" />
+            <Button mnemonicParsing="false" onAction="#start" text="Start" />
          </buttons></ButtonBar>
       <ScrollPane layoutX="28.0" layoutY="97.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="264.0" prefWidth="444.0" AnchorPane.bottomAnchor="39.0" AnchorPane.leftAnchor="28.0" AnchorPane.rightAnchor="28.0" AnchorPane.topAnchor="97.0">
          <content>
