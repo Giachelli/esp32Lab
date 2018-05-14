@@ -4,14 +4,15 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+
     
 public class Main extends Application {
-    @Override
+	
+	
+	 @Override
        public void start(Stage primaryStage) {
         try {
-            // Read file fxml and draw interface.
             Parent root = FXMLLoader.load(getClass().getResource("MyLayout.fxml"));
- 
             primaryStage.setTitle("My Application");
             primaryStage.setScene(new Scene(root));
             primaryStage.setMinHeight(300);
@@ -22,6 +23,7 @@ public class Main extends Application {
             e.printStackTrace();
         }
     }
+    
     
     public static void main(String[] args) {
         launch(args);

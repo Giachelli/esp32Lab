@@ -38,8 +38,9 @@
             <RowConstraints minHeight="10.0" prefHeight="30.0" />
          </rowConstraints>
       </GridPane>
-      <ButtonBar layoutX="293.0" layoutY="354.0" prefHeight="45.0" prefWidth="200.0" AnchorPane.bottomAnchor="1.0" AnchorPane.rightAnchor="7.0">
+      <ButtonBar layoutX="293.0" layoutY="354.0" prefHeight="45.0" prefWidth="324.0" AnchorPane.bottomAnchor="1.0" AnchorPane.rightAnchor="7.0">
          <buttons>
+            <Button mnemonicParsing="false" onAction="#scan_ESP" prefHeight="27.0" prefWidth="93.0" text="Scan ESP" />
           <Button mnemonicParsing="false" onAction="#addNewESP" text="New" />
             <Button mnemonicParsing="false" onAction="#start" text="Start" />
          </buttons></ButtonBar>
