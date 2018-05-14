@@ -62,7 +62,7 @@ static void sniffer_timer_init(void);
 /* Handlers */
 static esp_err_t event_handler(void *ctx, system_event_t *event);
 static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type);
-static void timer_callback(void *arg);
+static void IRAM_ATTR timer_callback(void *arg);
 /* Socket communication */
 static void socket_send_data(void);
 static void socket_receive_data(void);
@@ -74,11 +74,12 @@ static void printMac(uint8_t mac[6]);
 
 /* Global variables */
 static const char *TAG = "probe_sniffer";
-static vector<Packet> packets_list;
-static int s_fd, i = 0, conn_counter = 0;
+static vector<Packet*> packets_list;
+static int s_fd, i = 0;
 static enum modes mode = SERVER;
 struct sockaddr_in caddr;
 esp_err_t err;
+char c = 'b';
 
 /* Main C++ declaration */
 extern "C"
@@ -137,7 +138,6 @@ static void socket_server_init(void)
 	addr.sin_port = htons(1500);
 	addr.sin_addr.s_addr = INADDR_ANY;
 	bind(s_fd, (struct sockaddr *)&addr, sizeof(addr));
-
 }
 
 /* Initialize client socket */
@@ -150,28 +150,28 @@ static void socket_client_init(void)
 /* Initialize timer */
 static void sniffer_timer_init(void)
 {
+	int ex = 0;
 	timer_config_t config = {
 			.alarm_en = true,
 			.counter_en = true,
 			.intr_type = TIMER_INTR_LEVEL,
-			.counter_dir = TIMER_COUNT_DOWN,
+			.counter_dir = TIMER_COUNT_UP,
 			.auto_reload = false,
-			.divider = 16
+			.divider = 8000
 	};
 	ESP_ERROR_CHECK(timer_init(TIMER_GROUP_0, TIMER_0, &config));
-	ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 60000));
-	ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 0));
-	ESP_ERROR_CHECK(timer_isr_register(TIMER_GROUP_0, TIMER_0, timer_callback, (void *) NULL, ESP_INTR_FLAG_IRAM, NULL));
+	ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0));
+	ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 60));
+	ESP_ERROR_CHECK(timer_isr_register(TIMER_GROUP_0, TIMER_0, timer_callback,(void *) &ex, ESP_INTR_FLAG_IRAM, NULL));
+	ESP_ERROR_CHECK(timer_enable_intr(TIMER_GROUP_0, TIMER_0));
+
 }
 
 /* Handler for timer time-out */
-static void timer_callback(void *arg)
+static void IRAM_ATTR timer_callback(void *arg)
 {
 	TIMERG0.int_clr_timers.t0 = 1;
-	sniffer_off();
-	socket_send_data();
-	sniffer_timer_init();
-	sniffer_on();
+	c = 'a';
 }
 
 /* Handler for sniffer */
@@ -179,7 +179,6 @@ static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type)
 {
 	wifi_pkt_rx_ctrl_t ctrl;
 	struct wifi_packet_t *packet;
-	Packet p;
 	struct ssid_t *ssid;
 
 	ctrl = ((wifi_promiscuous_pkt_t *)buffer)->rx_ctrl;
@@ -188,31 +187,28 @@ static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type)
 	if(packet->mac_address.frame_ctrl == PROBE_REQ_CTRL)
 	{
 		//Is a PROBE REQUEST CONTROL PACKET
+		Packet *p = new Packet();
 		ssid = (ssid_t*) &(packet->payload);
 
 		string s((char *) ssid->ssid, ssid->lenght);
-		p.setRssi(ctrl.rssi);
-		p.setTime(ctrl.timestamp);
-		p.setMac(packet->mac_address.addr2);
-		p.setSsid(s);
-		printf("PROBE REQUEST - %d - rssi: %d timestamp: %u ", i++, p.getRssi(), p.getTime());
+		p->setRssi(ctrl.rssi);
+		p->setTime(ctrl.timestamp);
+		p->setMac(packet->mac_address.addr2);
+		p->setSsid(s);
+		printf("PROBE REQUEST - %d - rssi: %d timestamp: %u ", i++, p->getRssi(), p->getTime());
 		printMac(packet->mac_address.addr2);
 		printf(" ssid: %s l: %d id: %d noise: %d channel: %d\n",
-				p.getSsid().c_str(), ssid->lenght, ssid->id, ctrl.noise_floor, ctrl.channel);
+				p->getSsid().c_str(), ssid->lenght, ssid->id, ctrl.noise_floor, ctrl.channel);
 
 		packets_list.insert(packets_list.begin(), p);
 	}
-	else if(packet->mac_address.frame_ctrl == BEACON_CTRL)
-	{
-
-	}
-
 }
 
 /* General handler */
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     switch (event->event_id) {
+
         case SYSTEM_EVENT_STA_START:
             ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
             err = esp_wifi_connect();
@@ -237,8 +233,18 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 				socket_receive_data();
 			}
             socket_client_init();
-            sniffer_timer_init();
 			sniffer_on();
+			sniffer_timer_init();
+			while(c == 'b')
+			{
+
+			}
+			sniffer_off();
+			socket_send_data();
+			//sniffer_on();
+			//sniffer_timer_init();
+			c = 'b';
+			/* goto label;*/
             break;
 
         case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -249,7 +255,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
         case SYSTEM_EVENT_STA_CONNECTED:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA CONNECTED");
-			conn_counter = 0;
 			break;
 
         default:
@@ -260,6 +265,11 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 static void sniffer_on(void)
 {
+	printf("Sniffer on\n");
+
+	for(int i = 0; i < packets_list.size(); i++)
+		delete packets_list[i];
+
 	packets_list.clear();
 
 	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&sniffer_callback));
@@ -270,6 +280,7 @@ static void sniffer_on(void)
 
 static void sniffer_off(void)
 {
+	printf("Sniffer off\n");
 	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
 	mode = CLIENT;
 }
@@ -277,7 +288,7 @@ static void sniffer_off(void)
 /* Send data to the desktop application */
 static void socket_send_data(void)
 {
-
+	printf("\n\nSEND DATA, size: %d\n\n", packets_list.size());
 }
 
 /* Receive from desktop application */
