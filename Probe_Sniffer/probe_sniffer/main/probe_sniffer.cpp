@@ -5,9 +5,16 @@
  *      Author: alberto
  */
 
+/*
+ * 		Namespaces
+ */
 using namespace std;
 
-/* Includes */
+
+
+/*
+ * 		Includes
+ */
 #include <memory>
 #include <vector>
 #include "esp_wifi.h"
@@ -21,12 +28,20 @@ using namespace std;
 #include "driver/timer.h"
 #include "Packet.h"
 
-/* Defines */
+
+
+/*
+ * 		Defines
+ */
 #define PROBE_REQ_CTRL 64
 #define BEACON_CTRL 128
 #define N 20
 
-/* Structs */
+
+
+/*
+ * 		Structs
+ */
 struct wifi_mac_t {
 	uint16_t frame_ctrl:16;
 	uint16_t duration_id:16;
@@ -45,14 +60,22 @@ struct ssid_t {
 	uint8_t ssid[0];
 };
 
-/* Enums */
+
+
+/*
+ * 		Enums
+ */
 enum modes {
 	SERVER,
 	SNIFFER,
 	CLIENT
 };
 
-/* Functions prototypes */
+
+
+/*
+ * 		Functions prototypes
+ */
 void probe_sniffer(void);
 /* Initializations */
 static void wifi_init(void);
@@ -72,16 +95,21 @@ static void sniffer_off(void);
 /* Utilities */
 static void printMac(uint8_t mac[6]);
 
-/* Global variables */
+/*
+ * 		Global variables
+ */
 static const char *TAG = "probe_sniffer";
 static vector<Packet*> packets_list;
 static int s_fd, i = 0;
 static enum modes mode = SERVER;
 struct sockaddr_in caddr;
 esp_err_t err;
-char c = 'b';
+bool alert = false;
 
-/* Main C++ declaration */
+
+/*
+ * 		Main C++ declaration
+ */
 extern "C"
 {
 	void app_main();
@@ -104,6 +132,17 @@ void probe_sniffer(void)
     ESP_ERROR_CHECK( ret );
 
     wifi_init();
+
+    while(1)
+	{
+		if(!alert)
+			continue;
+
+		sniffer_off();
+		socket_send_data();
+		sniffer_on();
+		sniffer_timer_init();
+	}
 }
 
 /* Initialize Wi-Fi, called once */
@@ -159,19 +198,21 @@ static void sniffer_timer_init(void)
 			.auto_reload = false,
 			.divider = 8000
 	};
+
 	ESP_ERROR_CHECK(timer_init(TIMER_GROUP_0, TIMER_0, &config));
 	ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0));
-	ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 60));
-	ESP_ERROR_CHECK(timer_isr_register(TIMER_GROUP_0, TIMER_0, timer_callback,(void *) &ex, ESP_INTR_FLAG_IRAM, NULL));
+	ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 60000));
 	ESP_ERROR_CHECK(timer_enable_intr(TIMER_GROUP_0, TIMER_0));
-
+	ESP_ERROR_CHECK(timer_isr_register(TIMER_GROUP_0, TIMER_0, timer_callback,(void *) &ex, ESP_INTR_FLAG_IRAM, NULL));
+	ESP_ERROR_CHECK(timer_start(TIMER_GROUP_0, TIMER_0));
+	alert = false;
 }
 
 /* Handler for timer time-out */
 static void IRAM_ATTR timer_callback(void *arg)
 {
 	TIMERG0.int_clr_timers.t0 = 1;
-	c = 'a';
+	alert = true;
 }
 
 /* Handler for sniffer */
@@ -233,22 +274,13 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 				socket_receive_data();
 			}
             socket_client_init();
-			sniffer_on();
+            sniffer_on();
 			sniffer_timer_init();
-			while(c == 'b')
-			{
-
-			}
-			sniffer_off();
-			socket_send_data();
-			//sniffer_on();
-			//sniffer_timer_init();
-			c = 'b';
-			/* goto label;*/
             break;
 
         case SYSTEM_EVENT_STA_DISCONNECTED:
             ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
+            printf("Current ssid: %s", CONFIG_WIFI_SSID);
             ESP_ERROR_CHECK(esp_wifi_connect());
             /* reset sockets */
             break;
