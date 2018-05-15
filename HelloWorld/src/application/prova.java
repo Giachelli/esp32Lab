@@ -47,15 +47,20 @@ public class prova implements Initializable {
 	private GridPane gp_homePage;
 	
 	int num_ESP=0;;
-
+	protected MySystemManager mysystem;
+	
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
 
 	}      
 
 	@FXML
+	private void scan_ESP(ActionEvent event){
+		mysystem = new MySystemManager();
+	}
+	@FXML
 	private void addNewESP(ActionEvent event){
-		if(num_ESP<8) { //4 o numero di esp rilevati
+		if(num_ESP<mysystem.getN_device()) { //4 o numero di esp rilevati
 			try {    
 				GridPane temp = (GridPane) FXMLLoader.load(getClass().getResource("Block_new.fxml"));
 				GridPane btn_esp = (GridPane) FXMLLoader.load(getClass().getResource("Button_esp.fxml"));
