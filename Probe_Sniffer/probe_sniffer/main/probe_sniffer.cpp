@@ -5,11 +5,11 @@
  *      Author: alberto
  */
 
+
 /*
  * 		Namespaces
  */
 using namespace std;
-
 
 
 /*
@@ -29,14 +29,12 @@ using namespace std;
 #include "Packet.h"
 
 
-
 /*
  * 		Defines
  */
 #define PROBE_REQ_CTRL 64
 #define BEACON_CTRL 128
 #define N 20
-
 
 
 /*
@@ -61,7 +59,6 @@ struct ssid_t {
 };
 
 
-
 /*
  * 		Enums
  */
@@ -70,7 +67,6 @@ enum modes {
 	SNIFFER,
 	CLIENT
 };
-
 
 
 /*
@@ -94,6 +90,7 @@ static void sniffer_on(void);
 static void sniffer_off(void);
 /* Utilities */
 static void printMac(uint8_t mac[6]);
+
 
 /*
  * 		Global variables
@@ -321,19 +318,24 @@ static void sniffer_off(void)
 static void socket_send_data(void)
 {
 	printf("\nSEND DATA, size: %d\n\n", packets_list.size());
-	char s[2] = "\r\n";
+	char s[3] = "\r\n";
+	Packet *p = packets_list[i];
+	signed rssi = p->getRssi();
+	unsigned time = p->getTime();
+	int hash = p->getHash();
+
 
 	for(int i = 0; i < packets_list.size(); i++)
 	{
-		send(s_fd, &packets_list[i]->mac_address, 6, 0);
+		send(s_fd, (uint8_t *)p->getMac(), 6, 0);
 		send(s_fd, s, 2, 0);
-		send(s_fd, packets_list[i]->ssid.c_str(), packets_list[i]->ssid.size(), 0);
+		send(s_fd, (char *) p->getSsid().c_str(), packets_list[i]->getSsid().size(), 0);
 		send(s_fd, s, 2, 0);
-		send(s_fd, &packets_list[i]->rssi, sizeof(signed), 0);
+		send(s_fd, (signed *) &rssi, sizeof(signed), 0);
 		send(s_fd, s, 2, 0);
-		send(s_fd, &packets_list[i]->time, sizeof(unsigned), 0);
+		send(s_fd, (unsigned *) &time, sizeof(unsigned), 0);
 		send(s_fd, s, 2, 0);
-		send(s_fd, &packets_list[i]->hash, sizeof(int), 0);
+		send(s_fd, (int *) &hash, sizeof(int), 0);
 		send(s_fd, s, 2, 0);
 	}
 }
