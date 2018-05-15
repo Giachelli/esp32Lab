@@ -320,7 +320,22 @@ static void sniffer_off(void)
 /* Send data to the desktop application */
 static void socket_send_data(void)
 {
-	printf("\n\nSEND DATA, size: %d\n\n", packets_list.size());
+	printf("\nSEND DATA, size: %d\n\n", packets_list.size());
+	char s[2] = "\r\n";
+
+	for(int i = 0; i < packets_list.size(); i++)
+	{
+		send(s_fd, &packets_list[i]->mac_address, 6, 0);
+		send(s_fd, s, 2, 0);
+		send(s_fd, packets_list[i]->ssid.c_str(), packets_list[i]->ssid.size(), 0);
+		send(s_fd, s, 2, 0);
+		send(s_fd, &packets_list[i]->rssi, sizeof(signed), 0);
+		send(s_fd, s, 2, 0);
+		send(s_fd, &packets_list[i]->time, sizeof(unsigned), 0);
+		send(s_fd, s, 2, 0);
+		send(s_fd, &packets_list[i]->hash, sizeof(int), 0);
+		send(s_fd, s, 2, 0);
+	}
 }
 
 /* Receive from desktop application */
