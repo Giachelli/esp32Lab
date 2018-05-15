@@ -40,9 +40,9 @@
       </GridPane>
       <ButtonBar layoutX="293.0" layoutY="354.0" prefHeight="45.0" prefWidth="324.0" AnchorPane.bottomAnchor="1.0" AnchorPane.rightAnchor="7.0">
          <buttons>
-            <Button mnemonicParsing="false" onAction="#scan_ESP" prefHeight="27.0" prefWidth="93.0" text="Scan ESP" />
-          <Button mnemonicParsing="false" onAction="#addNewESP" text="New" />
-            <Button mnemonicParsing="false" onAction="#start" text="Start" />
+            <Button fx:id="scan" mnemonicParsing="false" onAction="#scan_ESP" prefHeight="27.0" prefWidth="93.0" text="Scan ESP" />
+          <Button fx:id="nuovo" disable="true" mnemonicParsing="false" onAction="#addNewESP" text="New" />
+            <Button fx:id="start" disable="true" mnemonicParsing="false" onAction="#start" text="Start" /> 
          </buttons></ButtonBar>
       <ScrollPane cache="true" layoutX="28.0" layoutY="97.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" opacity="0.8" prefHeight="264.0" prefWidth="469.0" AnchorPane.bottomAnchor="39.0" AnchorPane.leftAnchor="28.0" AnchorPane.rightAnchor="3.0" AnchorPane.topAnchor="97.0">
          <content>

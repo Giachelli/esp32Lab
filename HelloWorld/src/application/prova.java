@@ -15,11 +15,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
-import java.awt.Button;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Random;
@@ -45,6 +45,12 @@ public class prova implements Initializable {
 	private Label lab1;
 	@FXML
 	private GridPane gp_homePage;
+	@FXML
+	private Button nuovo;
+	@FXML
+	private Button start;
+	@FXML
+	private Button scan;
 	
 	int num_ESP=0;;
 	protected MySystemManager mysystem;
@@ -57,6 +63,11 @@ public class prova implements Initializable {
 	@FXML
 	private void scan_ESP(ActionEvent event){
 		mysystem = new MySystemManager();
+		
+		start.setDisable(false);;
+		nuovo.setDisable(false);
+		scan.setDisable(true);
+
 	}
 	@FXML
 	private void addNewESP(ActionEvent event){
@@ -110,6 +121,7 @@ public class prova implements Initializable {
 			System.out.print("nit");
 			System.out.print(num_ESP);
 			init_grafico();
+	
 			
 		}catch(Exception e) {
 			e.printStackTrace();
