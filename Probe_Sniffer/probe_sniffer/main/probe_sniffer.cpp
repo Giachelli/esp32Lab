@@ -197,6 +197,7 @@ static void sniffer_timer_init(void)
 	};
 
 	ESP_ERROR_CHECK(timer_init(TIMER_GROUP_0, TIMER_0, &config));
+	ESP_ERROR_CHECK(timer_pause(TIMER_GROUP_0, TIMER_0));
 	ESP_ERROR_CHECK(timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0));
 	ESP_ERROR_CHECK(timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 60000));
 	ESP_ERROR_CHECK(timer_enable_intr(TIMER_GROUP_0, TIMER_0));
@@ -323,9 +324,11 @@ static void socket_send_data(void)
 	signed rssi = p->getRssi();
 	unsigned time = p->getTime();
 	int hash = p->getHash();
+	uint32_t size = packets_list.size();
 
-
-	for(int i = 0; i < packets_list.size(); i++)
+	send(s_fd, &size, 4, 0);
+	send(s_fd, s, 2, 0);
+	for(int i = 0; i < size; i++)
 	{
 		send(s_fd, (uint8_t *)p->getMac(), 6, 0);
 		send(s_fd, s, 2, 0);
