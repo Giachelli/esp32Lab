@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<AnchorPane minHeight="500.0" minWidth="500.0" xmlns="http://javafx.com/javafx/9.0.4" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.prova">
+<AnchorPane minHeight="500.0" minWidth="500.0" xmlns="http://javafx.com/javafx/9.0.4" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.prova2">
    <children>
       <BubbleChart fx:id="grafico" layoutX="149.0" layoutY="135.0" prefHeight="280.0" prefWidth="351.0" AnchorPane.bottomAnchor="85.0" AnchorPane.leftAnchor="149.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="135.0">
         <xAxis>

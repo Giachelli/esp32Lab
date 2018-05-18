@@ -72,7 +72,7 @@ public class prova implements Initializable {
 	int num_ESP=0;;
 	protected MySystemManager mysystem;
 	private List<TextField> list = new ArrayList<>();
-	private int[] arr=new int[30];
+	public static int[] arr=new int[30];
 
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
@@ -232,8 +232,8 @@ int a=0;
 			//String s = Integer.toString (mysystem.getN_device());
 			num_of_ESP.setText(s); // passare la stringa con valore numero schede
 			num_of_dispositivi.setText("var_num_disp"); //passare la stringa con valore numero dispositivi
-			System.out.print("nit");
-			System.out.print(num_ESP);
+			System.out.println("init");
+			System.out.println(num_ESP);
 			init_grafico();
 
 
