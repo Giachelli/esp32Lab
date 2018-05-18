@@ -76,7 +76,8 @@ enum modes {
 void probe_sniffer(void);
 /* Initializations */
 static void wifi_init(void);
-static void socket_server_init(void);
+static void socket_server_udp_init(void);
+static void socket_server_tcp_init(void);
 static void socket_client_init(void);
 static void sniffer_timer_init(void);
 /* Handlers */
@@ -99,26 +100,11 @@ static void printMac(uint8_t mac[6]);
  */
 static const char *TAG = "probe_sniffer";
 static vector<Packet*> packets_list;
-static int s_fd, i = 0;
+static int s_fd, c_fd, conn_fd, i = 0;
 static enum modes mode = SERVER;
 static struct sockaddr_in caddr;
 static esp_err_t err;
 static bool alert = false;
-
-
-/*
- * 		Main C++ declaration
- */
-extern "C"
-{
-	void app_main();
-}
-
-/* Main */
-void app_main()
-{
-	probe_sniffer();
-}
 
 /* Entry point */
 void probe_sniffer(void)
@@ -138,6 +124,8 @@ void probe_sniffer(void)
 			continue;
 
 		sniffer_off();
+		close(c_fd);
+		socket_client_init();
 		socket_send_data();
 
 		socket_synchronize();
@@ -171,7 +159,7 @@ static void wifi_init(void)
 }
 
 /* Initialize server socket */
-static void socket_server_init(void)
+static void socket_server_udp_init(void)
 {
 	s_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	struct sockaddr_in addr;
@@ -181,11 +169,23 @@ static void socket_server_init(void)
 	bind(s_fd, (struct sockaddr *)&addr, sizeof(addr));
 }
 
+static void socket_server_tcp_init(void)
+{
+	s_fd = socket(AF_INET, SOCK_STREAM, 0);
+	struct sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(2000);
+	addr.sin_addr.s_addr = INADDR_ANY;
+	bind(s_fd, (struct sockaddr *)&addr, sizeof(addr));
+	listen(s_fd, 5);
+}
+
 /* Initialize client socket */
 static void socket_client_init(void)
 {
-	s_fd = socket(AF_INET, SOCK_STREAM, 0);
-	connect(s_fd, (sockaddr *) &caddr, sizeof(caddr));
+	c_fd = socket(AF_INET, SOCK_STREAM, 0);
+	caddr.sin_port = htons(1500);
+	connect(c_fd, (sockaddr *) &caddr, sizeof(caddr));
 }
 
 /* Initialize timer */
@@ -332,22 +332,22 @@ static void socket_send_data(void)
 	int hash = p->getHash();
 	uint32_t size = packets_list.size();
 
-	send(s_fd, &size, 4, 0);
-	send(s_fd, s, 2, 0);
+	send(c_fd, &size, 4, 0);
+	send(c_fd, s, 2, 0);
 	for(int i = 0; i < size; i++)
 	{
-		send(s_fd, (uint8_t *)p->getMac(), 6, 0);
-		send(s_fd, s, 2, 0);
-		send(s_fd, (char *) p->getSsid().c_str(), packets_list[i]->getSsid().size(), 0);
-		send(s_fd, s, 2, 0);
-		send(s_fd, (signed *) &rssi, sizeof(signed), 0);
-		send(s_fd, s, 2, 0);
-		send(s_fd, (unsigned *) &time, sizeof(unsigned), 0);
-		send(s_fd, s, 2, 0);
-		send(s_fd, (int *) &hash, sizeof(int), 0);
-		send(s_fd, s, 2, 0);
+		send(c_fd, (uint8_t *)p->getMac(), 6, 0);
+		send(c_fd, s, 2, 0);
+		send(c_fd, (char *) p->getSsid().c_str(), packets_list[i]->getSsid().size(), 0);
+		send(c_fd, s, 2, 0);
+		send(c_fd, (signed *) &rssi, sizeof(signed), 0);
+		send(c_fd, s, 2, 0);
+		send(c_fd, (unsigned *) &time, sizeof(unsigned), 0);
+		send(c_fd, s, 2, 0);
+		send(c_fd, (int *) &hash, sizeof(int), 0);
+		send(c_fd, s, 2, 0);
 		printf("\r%d packets send.", i+1);
-		send(s_fd, sp, 2, 0);
+		send(c_fd, sp, 2, 0);
 	}
 	printf("\n");
 }
@@ -355,7 +355,7 @@ static void socket_send_data(void)
 /* Receive from desktop application */
 static void socket_receive_data(void)
 {
-	socket_server_init();
+	socket_server_udp_init();
 
 	socklen_t l = sizeof(caddr);
 	char address[16];
@@ -372,8 +372,8 @@ static void socket_receive_data(void)
 
 	close(s_fd);
 
-	socket_client_init();
-
+	socket_server_tcp_init();
+	conn_fd = accept(s_fd, (sockaddr*) &caddr, &l);
 	while(true)
 	{
 		recv(s_fd, buffer, N, 0);
@@ -392,13 +392,15 @@ static void socket_receive_data(void)
 		}
 	}
 
-
+	close(conn_fd);
 }
 
 static void socket_synchronize(void)
 {
 	char buffer[N];
+	socklen_t l = sizeof(caddr);
 
+	conn_fd = accept(s_fd, (sockaddr*) &caddr, &l);
 	while(true)
 	{
 		recv(s_fd, buffer, N, 0);
@@ -416,6 +418,7 @@ static void socket_synchronize(void)
 			printf("Packet format not recognized.\n");
 		}
 	}
+	close(conn_fd);
 }
 
 /* Print MAC address */
