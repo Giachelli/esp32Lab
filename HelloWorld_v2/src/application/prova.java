@@ -70,6 +70,7 @@ public class prova implements Initializable {
 	int num_ESP=0;;
 	protected MySystemManager mysystem;
 	private List<TextField> list = new ArrayList<>();
+	private int[] arr=new int[30];
 
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
@@ -78,27 +79,46 @@ public class prova implements Initializable {
 
 	@FXML
 	private void scan_ESP(ActionEvent event){
-		//	mysystem = new MySystemManager();
+			//mysystem = new MySystemManager();
 
 		start.setDisable(false);;
-		nuovo.setDisable(false);
+		//nuovo.setDisable(false);
 		scan.setDisable(true);
+		//for(int i=0;i<mysystem.getN_device();i++)
+		for(int i=0;i<3;i++){
+			addESP();
+		}
 
+	}
+	private void addESP(){
+			//if(num_ESP<mysystem.getN_device()){ //4 o numero di esp rilevati
+		if(num_ESP<4) {
+			try {    
+				GridPane temp = getBlocco(num_ESP);
+				GridPane btn_esp = (GridPane) FXMLLoader.load(getClass().getResource("Button_esp.fxml"));
+				gp.addRow(1+num_ESP);
+				gp.add(temp, 1, num_ESP);//x is column index and 0 is row index
+				gp.add(btn_esp, 3, num_ESP);
+				num_ESP++;	
+
+			}catch(Exception e) {
+				e.printStackTrace();
+			}	
+		}
 	}
 
 	private GridPane getBlocco(int num_ESP)
 	{
 		GridPane result = new GridPane();
-
 		GridPane gp = new GridPane();
 
 		Label esp = new Label();
 		esp.setText("ESP_"+num_ESP);
 		Label xl = new Label("X"), yl = new Label("Y");
 		TextField xf = new TextField();
-		xf.setPromptText("Insert X");
+		xf.setPromptText("Ins X");
 		TextField yf = new TextField();
-		yf.setPromptText("Insert Y");
+		yf.setPromptText("Ins Y");
 
 		list.add(xf);
 		list.add(yf);
@@ -115,7 +135,7 @@ public class prova implements Initializable {
 		c1.setPrefWidth(22);
 		ColumnConstraints c2 = new ColumnConstraints();
 		c2.setMinWidth(10);
-		c2.setPrefWidth(40);
+		c2.setPrefWidth(65);
 		RowConstraints r1 = new RowConstraints();
 		r1.setMinHeight(10);
 		r1.setPrefHeight(30);
@@ -164,15 +184,27 @@ public class prova implements Initializable {
 		}
 	}
 	private void input_field() {
-
+int a=0;
 		for(TextField tf:list)
 		{
 			System.out.println(tf.getText());
-		}
+			int i= Integer.parseInt(tf.getText());
+			System.out.println(i);
+			arr[a]= i;
+					a++;
+		}System.out.println(Arrays.toString(arr));
+		
+		//send_data_db(list);
+	
 	}
 	@FXML
 	private void start(ActionEvent new_event) {
 		try {    
+			if(1==1) { // verificare che i TextField siano pieni
+				input_field();}
+			else { //mostra i rossi intorno ai textfield vuoti e non andare avanti
+			}
+			
 			Parent home_page_parent = FXMLLoader.load(getClass().getResource("Home_page.fxml"));
 			Object eventSource = new_event.getSource();
 			Node source_as_node = (Node) eventSource;
@@ -182,7 +214,7 @@ public class prova implements Initializable {
 			Scene scene = new Scene(home_page_parent); 
 			stage.setScene(scene);
 			stage.setMaximized(true);
-			input_field();
+		
 			stage.show();
 
 		}catch(Exception e) {
@@ -194,6 +226,7 @@ public class prova implements Initializable {
 	private void init(ActionEvent init_event) {
 		try { 
 			String s = Integer.toString (num_ESP);//me lo passa gala
+			//String s = Integer.toString (mysystem.getN_device());
 			num_of_ESP.setText(s); // passare la stringa con valore numero schede
 			num_of_dispositivi.setText("var_num_disp"); //passare la stringa con valore numero dispositivi
 			System.out.print("nit");
@@ -209,15 +242,20 @@ public class prova implements Initializable {
 
 	private void init_grafico() {
 		int n=0;
-		System.out.print("set grafico");
+		System.out.println("set grafico");
 		xAxis.setLabel("Week");
 		yAxis.setLabel("Product Budget");
 		grafico.setTitle("Budget Monitoring");
-
+		input_field();
 		XYChart.Series series1 = new XYChart.Series();
-		series1.setName("Product 1");
-		series1.getData().add(new XYChart.Data(10, 35));
-
+		series1.setName("ESP");
+		//recive_data_db();
+		for(int i=0;i<3*2;) {
+			System.out.println(arr[i]);
+		System.out.println("ciao sono in for");
+		series1.getData().add(new XYChart.Data(arr[i],arr[i+1]));
+		i=i+2;
+		}
 		XYChart.Series series2 = new XYChart.Series();
 
 		series2.setName("Product 2");

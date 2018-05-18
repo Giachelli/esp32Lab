@@ -13,7 +13,7 @@
          <graphic>
             <ImageView fitHeight="94.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../../../Documents/UNIVERSITA/Progettazione%20di%20sistema/Malnati/PROGETTO/Pictures/esp32.png" />
+                  <Image url="@../../../../../eclipse-workspace/HelloWorld/src/application/esp32.png" />
                </image>
             </ImageView>
          </graphic></Button>
