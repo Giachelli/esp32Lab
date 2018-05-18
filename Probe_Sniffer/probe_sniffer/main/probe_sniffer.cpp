@@ -72,6 +72,7 @@ enum modes {
 /*
  * 		Functions prototypes
  */
+/* Entry point */
 void probe_sniffer(void);
 /* Initializations */
 static void wifi_init(void);
@@ -85,6 +86,7 @@ static void IRAM_ATTR timer_callback(void *arg);
 /* Socket communication */
 static void socket_send_data(void);
 static void socket_receive_data(void);
+static void socket_synchronize(void);
 /* Sniffer */
 static void sniffer_on(void);
 static void sniffer_off(void);
@@ -99,9 +101,9 @@ static const char *TAG = "probe_sniffer";
 static vector<Packet*> packets_list;
 static int s_fd, i = 0;
 static enum modes mode = SERVER;
-struct sockaddr_in caddr;
-esp_err_t err;
-bool alert = false;
+static struct sockaddr_in caddr;
+static esp_err_t err;
+static bool alert = false;
 
 
 /*
@@ -137,6 +139,9 @@ void probe_sniffer(void)
 
 		sniffer_off();
 		socket_send_data();
+
+		socket_synchronize();
+
 		sniffer_on();
 		sniffer_timer_init();
 	}
@@ -149,9 +154,9 @@ static void wifi_init(void)
 
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
-    /* Define configurations */
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
 	wifi_config_t wifi_config;
     memset(&wifi_config, 0, sizeof(wifi_config));
     strcpy((char*)wifi_config.sta.ssid, CONFIG_WIFI_SSID);
@@ -225,7 +230,6 @@ static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type)
 
 	if(packet->mac_address.frame_ctrl == PROBE_REQ_CTRL)
 	{
-		//Is a PROBE REQUEST CONTROL PACKET
 		Packet *p = new Packet();
 		ssid = (ssid_t*) &(packet->payload);
 
@@ -267,11 +271,12 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
             ESP_LOGI(TAG, "Got IP: %s\n",
 			ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+
             if(mode == SERVER)
-			{
 				socket_receive_data();
-			}
-            socket_client_init();
+            else
+            	socket_client_init();
+
             sniffer_on();
 			sniffer_timer_init();
             break;
@@ -280,7 +285,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
             printf("Current ssid: %s", CONFIG_WIFI_SSID);
             ESP_ERROR_CHECK(esp_wifi_connect());
-            /* reset sockets */
+            socket_client_init();
             break;
 
         case SYSTEM_EVENT_STA_CONNECTED:
@@ -295,7 +300,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 static void sniffer_on(void)
 {
-	printf("Sniffer on\n");
+	printf("Sniffer on.\n");
 
 	for(int i = 0; i < packets_list.size(); i++)
 		delete packets_list[i];
@@ -310,7 +315,7 @@ static void sniffer_on(void)
 
 static void sniffer_off(void)
 {
-	printf("Sniffer off\n");
+	printf("Sniffer off.\n");
 	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
 	mode = CLIENT;
 }
@@ -320,6 +325,7 @@ static void socket_send_data(void)
 {
 	printf("\nSEND DATA, size: %d\n\n", packets_list.size());
 	char s[3] = "\r\n";
+	char sp[3] = "\n\r";
 	Packet *p = packets_list[i];
 	signed rssi = p->getRssi();
 	unsigned time = p->getTime();
@@ -340,7 +346,10 @@ static void socket_send_data(void)
 		send(s_fd, s, 2, 0);
 		send(s_fd, (int *) &hash, sizeof(int), 0);
 		send(s_fd, s, 2, 0);
+		printf("\r%d packets send.", i+1);
+		send(s_fd, sp, 2, 0);
 	}
+	printf("\n");
 }
 
 /* Receive from desktop application */
@@ -359,9 +368,54 @@ static void socket_receive_data(void)
 
 	/* Test send back */
 	int err = sendto(s_fd, buffer, N, 0, (sockaddr *) &caddr, l);
-	printf("num byte: %d Send back: %s\n", err, buffer);
+	printf("Num byte: %d Send back: %s\n", err, buffer);
 
 	close(s_fd);
+
+	socket_client_init();
+
+	while(true)
+	{
+		recv(s_fd, buffer, N, 0);
+		if(strcmp(buffer, "START") == 0)
+		{
+			printf("Starting..\n");
+			break;
+		}
+		if(strcmp(buffer, "LED") == 0)
+		{
+			/* Led */
+		}
+		else
+		{
+			printf("Packet format not recognized.\n");
+		}
+	}
+
+
+}
+
+static void socket_synchronize(void)
+{
+	char buffer[N];
+
+	while(true)
+	{
+		recv(s_fd, buffer, N, 0);
+		if(strcmp(buffer, "START") == 0)
+		{
+			printf("Re - starting..\n");
+			break;
+		}
+		if(strcmp(buffer, "LED") == 0)
+		{
+			/* Led */
+		}
+		else
+		{
+			printf("Packet format not recognized.\n");
+		}
+	}
 }
 
 /* Print MAC address */
