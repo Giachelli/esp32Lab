@@ -66,6 +66,8 @@ public class prova implements Initializable {
 	private Button start;
 	@FXML
 	private Button scan;
+	@FXML
+	private ImageView sfondo;
 
 	int num_ESP=0;;
 	protected MySystemManager mysystem;
@@ -84,6 +86,7 @@ public class prova implements Initializable {
 		start.setDisable(false);;
 		//nuovo.setDisable(false);
 		scan.setDisable(true);
+		sfondo.setVisible(false);
 		//for(int i=0;i<mysystem.getN_device();i++)
 		for(int i=0;i<3;i++){
 			addESP();
