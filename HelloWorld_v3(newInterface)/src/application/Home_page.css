@@ -1,0 +1,87 @@
+.chart-plot-background {
+    -fx-background-color: white;
+}
+.chart-vertical-grid-lines {
+    -fx-stroke: white;
+}
+.chart-horizontal-grid-lines {
+    -fx-stroke: white;
+}
+.chart-alternative-row-fill {
+    -fx-fill: white;
+    -fx-stroke: transparent;
+    -fx-stroke-width: 0;
+}
+
+.axis {
+    -fx-tick-label-fill: #f1dd30;
+    -fx-tick-length: 20;
+    -fx-minor-tick-length: 10;
+    -fx-font-family: Rajdhani; 
+    -fx-font-size: 1.3em;
+    -fx-stroke: #f1dd30;
+    
+}
+ 
+.axis-label {
+   -fx-text-fill: #462300; 
+}
+
+
+.toolbar-style{
+	-fx-background-color: #009688;
+}
+
+.anchor-pane{
+	-fx-background-color: #e0e0e0;
+}
+
+.chart-bubble.series0.data0.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data1.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data2.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data3.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+    -fx-effect: innershadow(gaussian, blue, 20, 0, 20, 20);
+    
+}
+
+.chart-bubble.series0.data4.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data5.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data6.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data7.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data8.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data9.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data10.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+
+.chart-bubble.series0.data11.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
