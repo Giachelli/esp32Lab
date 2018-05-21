@@ -1,5 +1,5 @@
 .chart-plot-background {
-    -fx-background-color: white;
+   -fx-background-color: white;
 }
 .chart-vertical-grid-lines {
     -fx-stroke: white;

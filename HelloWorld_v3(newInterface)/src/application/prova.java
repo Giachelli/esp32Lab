@@ -83,21 +83,21 @@ public class prova implements Initializable {
 
 	@FXML
 	private void scan_ESP(ActionEvent event){
-			//mysystem = new MySystemManager();
+		mysystem = new MySystemManager();
 
 		start.setDisable(false);;
 		//nuovo.setDisable(false);
 		scan.setDisable(true);
 		sfondo.setVisible(false);
-		//for(int i=0;i<mysystem.getN_device();i++)
-		for(int i=0;i<3;i++){
+		for(int i=0;i<mysystem.getN_device();i++) {
+			//for(int i=0;i<3;i++){
 			addESP();
 		}
 
 	}
 	private void addESP(){
-			//if(num_ESP<mysystem.getN_device()){ //4 o numero di esp rilevati
-		if(num_ESP<4) {
+		if(num_ESP<mysystem.getN_device()){ //4 o numero di esp rilevati
+			//if(num_ESP<4) {
 			try {    
 				GridPane temp = getBlocco(num_ESP);
 				GridPane btn_esp = (GridPane) FXMLLoader.load(getClass().getResource("Button_esp.fxml"));
@@ -173,8 +173,8 @@ public class prova implements Initializable {
 
 	@FXML
 	private void addNewESP(ActionEvent event){
-		//	if(num_ESP<mysystem.getN_device()){ //4 o numero di esp rilevati
-		if(num_ESP<4) {
+		if(num_ESP<mysystem.getN_device()){ //4 o numero di esp rilevati
+			//if(num_ESP<4) {
 			try {    
 				GridPane temp = getBlocco(num_ESP);
 				GridPane btn_esp = (GridPane) FXMLLoader.load(getClass().getResource("Button_esp.fxml"));
@@ -188,21 +188,28 @@ public class prova implements Initializable {
 			}	
 		}
 	}
-	
+
 	private void input_field() {
 		int a=0;
+		int index=0;
 		for(TextField tf:list)
 		{
 			System.out.println(tf.getText());
 			int i= Integer.parseInt(tf.getText());
 			System.out.println(i);
 			arr[a]= i;
-					a++;
-		}System.out.println(Arrays.toString(arr));
-		
-		//send_data_db(list);
+			if((a%2)!=0) {
+				mysystem.getDevice().get(index).setX(arr[a-1]);
+				mysystem.getDevice().get(index).setY(arr[a]);
+				index++;
+			}
+			a++;
+
+		}
+		System.out.println(Arrays.toString(arr));
 	}
-	
+
+
 	@FXML
 	private void start(ActionEvent new_event) {
 		try {    
@@ -210,7 +217,7 @@ public class prova implements Initializable {
 				input_field();}
 			else { //mostra i rossi intorno ai textfield vuoti e non andare avanti
 			}
-			
+
 			Parent home_page_parent = FXMLLoader.load(getClass().getResource("Home_page.fxml"));
 			Object eventSource = new_event.getSource();
 			Node source_as_node = (Node) eventSource;
@@ -218,15 +225,15 @@ public class prova implements Initializable {
 			Window window = oldScene.getWindow();
 			Stage stage = (Stage) window;
 			Scene scene = new Scene(home_page_parent); 
-	        scene.getStylesheets().add(getClass().getResource("Home_page.css").toExternalForm());
-	        scene.getStylesheets().add("https://fonts.googleapis.com/css?family=Rajdhani");
-
+			scene.getStylesheets().add(getClass().getResource("Home_page.css").toExternalForm());
+			scene.getStylesheets().add("https://fonts.googleapis.com/css?family=Rajdhani");
+			mysystem.start();
 			stage.setScene(scene);
 			stage.setMaximized(true);
-		
+
 			stage.show();
-			
-		
+
+
 		}catch(Exception e) {
 			e.printStackTrace();
 		}	
@@ -241,7 +248,7 @@ public class prova implements Initializable {
 			num_of_dispositivi.setText("var_num_disp"); //passare la stringa con valore numero dispositivi
 			System.out.println("init");
 			System.out.println(num_ESP);
-			
+
 
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -261,9 +268,9 @@ public class prova implements Initializable {
 		//recive_data_db();
 		for(int i=0;i<3*2;) {
 			System.out.println(arr[i]);
-		System.out.println("ciao sono in for");
-		series1.getData().add(new XYChart.Data(arr[i],arr[i+1]));
-		i=i+2;
+			System.out.println("ciao sono in for");
+			series1.getData().add(new XYChart.Data(arr[i],arr[i+1]));
+			i=i+2;
 		}
 		XYChart.Series series2 = new XYChart.Series();
 

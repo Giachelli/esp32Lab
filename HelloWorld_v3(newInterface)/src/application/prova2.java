@@ -112,7 +112,8 @@ public class prova2 implements Initializable {
 		XYChart.Series series1 = new XYChart.Series();
 		series1.setName("ESP");
 		//recive_data_db();
-		for(int i=0;i<3*2;) {
+		for(int i=0;i<mysystem.getN_device()*2;) {
+		//for(int i=0;i<3*2;) {
 			System.out.println(classe_prova.arr[i]);
 		System.out.println("ciao sono in for");
 		series1.getData().add(new XYChart.Data(classe_prova.arr[i],classe_prova.arr[i+1]));
