@@ -290,7 +290,6 @@ public class MySystemManager {
 				System.exit(-1);
 			}
 
-			System.out.println(pacchetti.toString());
 			/*String[] pacchetti_divisi = pacchetti.toString().split("\\n\\r");
 			System.out.println(pacchetti.toString());
 			for (i=0;i<pacchetti_divisi.length;i++)
