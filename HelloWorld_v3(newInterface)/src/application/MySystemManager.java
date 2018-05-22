@@ -232,7 +232,6 @@ public class MySystemManager {
 						}
 						
 						System.out.println("thread is running...prima"); 
-						System.out.print(welcomeSocket.getLocalPort());
 						getESPdata();
 						System.out.println("thread is running...dopo");  
 					}	 
@@ -256,59 +255,55 @@ public class MySystemManager {
 
 		while (count<n_device) {
 			Socket connectionSocket = null;
-			DataInputStream inFromClient = null;
-			int n_packets = 0;
+			InputStream in = null;
+			int size = 0;
 
 			try {
-				
-				connectionSocket = welcomeSocket.accept();
-				inFromClient = new DataInputStream(connectionSocket.getInputStream());
-				
-						byte[] intData = new byte[4];
 
-						
-						   inFromClient.readFully(intData);
-						   System.out.println(ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt());
-						n_packets = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+				connectionSocket = welcomeSocket.accept();
+				in = connectionSocket.getInputStream();
+				
+				byte[] intData = new byte[4];
+
+				in.read(intData);
+				System.out.println(ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt());
+				size = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
-
-			int packet_size=50, read; 
-			int size_left = packet_size * n_packets;
-			System.out.println(n_packets +" "+ Integer.SIZE);
 			byte[] buffer = new byte[4096];
 			StringBuffer pacchetti = new StringBuffer();
+			System.out.println(size);
+			int read, size_left=size;
 
 			try {
-				System.out.println("ciao4");
-				while ((read = inFromClient.readNBytes(buffer, 0, Math.min(buffer.length, size_left)))>0)
-				{		System.out.println("ciao5");
+				while ((read = in.read(buffer, 0, Math.min(buffer.length, size_left)))>0)
+				{		
 					size_left-=read;
-					System.out.println(buffer);
+					System.out.println(read);
 					pacchetti.append(buffer.toString());
-					System.out.println(buffer.toString());
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
-			String[] pacchetti_divisi = pacchetti.toString().split("\\n\\r");
+			System.out.println(pacchetti.toString());
+			/*String[] pacchetti_divisi = pacchetti.toString().split("\\n\\r");
 			System.out.println(pacchetti.toString());
 			for (i=0;i<pacchetti_divisi.length;i++)
 			{
-				System.out.println(pacchetti_divisi[i]);
+				//System.out.println(pacchetti_divisi[i]);
 				
 				String[] campi = pacchetti_divisi[i].split("\\r\\n");
 
-				/*
+				
 				 * bisogna ancora implementare il numero dell'esp da cui
 				 * riceve i pacchetti, per ora inserisco un numero casuale
-				 */
-
+				 
+				System.out.println(campi[0]);
 				ProbeRequest pr = new ProbeRequest(campi[0], 
 						Integer.parseInt(campi[1]),
 						Integer.parseInt(campi[2]),
@@ -317,7 +312,7 @@ public class MySystemManager {
 						0);
 				packetsToSend.add(pr);
 			}
-			count++;		
+			count++;*/		
 		}
 
 		StringBuffer query = new StringBuffer("INSERT INTO dati_applicazione VALUES ");

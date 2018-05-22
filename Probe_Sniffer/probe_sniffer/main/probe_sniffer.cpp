@@ -368,20 +368,33 @@ static void sniffer_off(void)
 /* Send data to the desktop application */
 static void socket_send_data(void)
 {
+	/*
+		dimensione del pacchetto 36 byte fissi piu linghezza dell'ssid
+	*/
+
 	printf("\nSEND DATA, size: %d\n\n", packets_list.size());
 	char s[3] = "\r\n";
 	char sp[3] = "\n\r";
-	Packet *p = packets_list[0];
-	signed rssi = p->getRssi();
-	unsigned time = p->getTime();
-	int hash = p->getHash();
-	uint32_t size = packets_list.size();
+	uint32_t size = 36*(packets_list.size());
+	int i;
+
+	for (i = 0; i < packets_list.size(); i++)
+		size += packets_list[i]->getSsid().size();
 
 	send(c_fd, &size, 4, 0);
-	send(c_fd, s, 2, 0);
-	for(int i = 0; i < size; i++)
+	//send(c_fd, s, 2, 0);
+	
+	for(i = 0; i < packets_list.size(); i++)
 	{
-		send(c_fd, (uint8_t *)p->getMac(), 6, 0);
+		Packet *p = packets_list[i];
+		signed rssi = p->getRssi();
+		unsigned time = p->getTime();
+		int hash = p->getHash();
+
+		size = 36 + packets_list[i]->getSsid().size();
+		send(c_fd, &size, 4, 0);
+		send(c_fd, s, 2, 0);
+		send(c_fd, (uint8_t *) p->getMac(), 6, 0);
 		send(c_fd, s, 2, 0);
 		send(c_fd, (char *) p->getSsid().c_str(), packets_list[i]->getSsid().size(), 0);
 		send(c_fd, s, 2, 0);
@@ -395,7 +408,7 @@ static void socket_send_data(void)
 		send(c_fd, sp, 2, 0);
 	}
 	printf("\n");
-	fflush(c_fd);
+	//fflush(c_fd);
 }
 
 /* Receive from desktop application */
