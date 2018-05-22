@@ -370,16 +370,19 @@ static void socket_send_data(void)
 {
 	/*
 		dimensione del pacchetto 36 byte fissi piu linghezza dell'ssid
+
+		- la funzione prima manda il numere dei pacchetti
+		
+		poi per ogni pacchetto
+		- manda la dimensione del pacchetto corrente (serve al pc per capire la dimesione dell'ssid)
+		- poi tutti i dati
 	*/
 
 	printf("\nSEND DATA, size: %d\n\n", packets_list.size());
 	char s[3] = "\r\n";
 	char sp[3] = "\n\r";
-	uint32_t size = 36*(packets_list.size());
+	uint32_t size = packets_list.size();
 	int i;
-
-	for (i = 0; i < packets_list.size(); i++)
-		size += packets_list[i]->getSsid().size();
 
 	send(c_fd, &size, 4, 0);
 	//send(c_fd, s, 2, 0);
