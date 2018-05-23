@@ -114,7 +114,7 @@ public class MySystemManager {
 				 * estrazione dei vari campi dai risultati della query
 				 */
 				String mac = rs.getString("MAC_ADDRESS");
-				int ssid = rs.getInt("SSID");
+				String ssid = rs.getString("SSID");
 				int date =rs.getInt("DATE");
 				int hash = rs.getInt("HASH");
 				int signal = rs.getInt("SIGNAL");
@@ -232,7 +232,6 @@ public class MySystemManager {
 						}
 						
 						System.out.println("thread is running...prima"); 
-						System.out.print(welcomeSocket.getLocalPort());
 						getESPdata();
 						System.out.println("thread is running...dopo");  
 					}	 
@@ -256,59 +255,84 @@ public class MySystemManager {
 
 		while (count<n_device) {
 			Socket connectionSocket = null;
-			DataInputStream inFromClient = null;
-			int n_packets = 0;
+			InputStream in = null;
+			int num_pack = 0;
 
 			try {
-				
-				connectionSocket = welcomeSocket.accept();
-				inFromClient = new DataInputStream(connectionSocket.getInputStream());
-				
-						byte[] intData = new byte[4];
 
-						
-						   inFromClient.readFully(intData);
-						   System.out.println(ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt());
-						n_packets = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+				connectionSocket = welcomeSocket.accept();
+				in = connectionSocket.getInputStream();
+				
+				byte[] intData = new byte[4];
+
+				in.read(intData);
+				System.out.println(ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt());
+				num_pack = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
-
-			int packet_size=50, read; 
-			int size_left = packet_size * n_packets;
-			System.out.println(n_packets +" "+ Integer.SIZE);
-			byte[] buffer = new byte[4096];
-			StringBuffer pacchetti = new StringBuffer();
-
 			try {
-				System.out.println("ciao4");
-				while ((read = inFromClient.readNBytes(buffer, 0, Math.min(buffer.length, size_left)))>0)
-				{		System.out.println("ciao5");
-					size_left-=read;
-					System.out.println(buffer);
-					pacchetti.append(buffer.toString());
-					System.out.println(buffer.toString());
+				for (i = 0;i < num_pack;i++)
+				{		
+					byte[] intData = new byte[4]; //buffer temporaneo per salvare tutti gli interi
+					byte[] macAddr = new byte[6]; //salva la dimensione dell'indirizzo mac
+					
+					int pack_size, ssid_size, rssi, time, hash;
+					String macAddrString, ssidString = "";
+					
+					in.read(intData);
+					pack_size = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					
+					ssid_size=pack_size-18;
+					
+					byte[] ssid = new byte[ssid_size]; //salvo eventuale valore di ssid in buffer sovrallocato
+					
+					in.read(macAddr); //non necessita di conversione
+					macAddrString = String.format("%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
+					
+					int ret=in.read(ssid, 0, ssid_size);
+					if (ret>0)
+					{
+						StringBuffer tmp=new StringBuffer();
+						for (int j=0;j<ret;j++)
+							tmp.append(String.format("%c", ssid[j]));
+						ssidString=tmp.toString();
+					}								
+					
+					in.read(intData);
+					rssi = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					
+					in.read(intData);
+					time = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					
+					in.read(intData);
+					hash = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+					// da modificare
+					ProbeRequest tmProbeRequest = new ProbeRequest(macAddrString, ssidString, time, hash, rssi, 0);
+					System.out.println(tmProbeRequest);
+					packetsToSend.add(tmProbeRequest);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
-			String[] pacchetti_divisi = pacchetti.toString().split("\\n\\r");
+			/*String[] pacchetti_divisi = pacchetti.toString().split("\\n\\r");
 			System.out.println(pacchetti.toString());
 			for (i=0;i<pacchetti_divisi.length;i++)
 			{
-				System.out.println(pacchetti_divisi[i]);
+				//System.out.println(pacchetti_divisi[i]);
 				
 				String[] campi = pacchetti_divisi[i].split("\\r\\n");
 
-				/*
+				
 				 * bisogna ancora implementare il numero dell'esp da cui
 				 * riceve i pacchetti, per ora inserisco un numero casuale
-				 */
-
+				 
+				System.out.println(campi[0]);
 				ProbeRequest pr = new ProbeRequest(campi[0], 
 						Integer.parseInt(campi[1]),
 						Integer.parseInt(campi[2]),
@@ -317,7 +341,7 @@ public class MySystemManager {
 						0);
 				packetsToSend.add(pr);
 			}
-			count++;		
+			count++;*/		
 		}
 
 		StringBuffer query = new StringBuffer("INSERT INTO dati_applicazione VALUES ");
@@ -334,7 +358,11 @@ public class MySystemManager {
 					packetsToSend.get(i).getDate() +
 					packetsToSend.get(i).getHash() +
 					packetsToSend.get(i).getSignal() +
-					packetsToSend.get(i).getESP_32_id() + "),");		
+					packetsToSend.get(i).getESP_32_id() + ")");
+			if (i!=packetsToSend.size()-1)
+				query.append(",");
+			else 
+				query.append(";");
 		}
 
 		try {
