@@ -394,7 +394,7 @@ static void socket_send_data(void)
 		unsigned time = p->getTime();
 		int hash = p->getHash();
 
-		size = 36 + packets_list[i]->getSsid().size();
+		size = 18 + packets_list[i]->getSsid().size();
 		send(c_fd, &size, 4, 0);
 		//send(c_fd, s, 2, 0);
 		send(c_fd, (uint8_t *) p->getMac(), 6, 0);

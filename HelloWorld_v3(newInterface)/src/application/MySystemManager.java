@@ -278,14 +278,16 @@ public class MySystemManager {
 				{		
 					byte[] intData = new byte[4]; //buffer temporaneo per salvare tutti gli interi
 					byte[] macAddr = new byte[6]; //salva la dimensione dell'indirizzo mac
-					byte[] ssid = new byte[1024]; //salvo eventuale valore di ssid in buffer sovrallocato
+					
 					int pack_size, ssid_size, rssi, time, hash;
 					String macAddrString, ssidString = "";
 					
 					in.read(intData);
 					pack_size = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
 					
-					ssid_size=pack_size-36;
+					ssid_size=pack_size-18;
+					
+					byte[] ssid = new byte[ssid_size]; //salvo eventuale valore di ssid in buffer sovrallocato
 					
 					in.read(macAddr); //non necessita di conversione
 					macAddrString = String.format("%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
@@ -308,8 +310,10 @@ public class MySystemManager {
 					in.read(intData);
 					hash = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
+					// da modificare
 					ProbeRequest tmProbeRequest = new ProbeRequest(macAddrString, ssidString, time, hash, rssi, 0);
 					System.out.println(tmProbeRequest);
+					packetsToSend.add(tmProbeRequest);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -354,7 +358,11 @@ public class MySystemManager {
 					packetsToSend.get(i).getDate() +
 					packetsToSend.get(i).getHash() +
 					packetsToSend.get(i).getSignal() +
-					packetsToSend.get(i).getESP_32_id() + "),");		
+					packetsToSend.get(i).getESP_32_id() + ")");
+			if (i!=packetsToSend.size()-1)
+				query.append(",");
+			else 
+				query.append(";");
 		}
 
 		try {
