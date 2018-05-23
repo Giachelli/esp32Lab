@@ -5,13 +5,13 @@ import java.util.Date;
 public class ProbeRequest {
 	
 	private String mac_addr;
-	private int SSID;
+	private String SSID;
 	private int date;
 	private int hash;
 	private int signal;
 	private int ESP_32_id;
 	
-	public ProbeRequest(String mac_addr, int sSID, int date, int hash, int signal, int ESP_32_id) {
+	public ProbeRequest(String mac_addr, String sSID, int date, int hash, int signal, int ESP_32_id) {
 		super();
 		this.mac_addr = mac_addr;
 		SSID = sSID;
@@ -37,11 +37,11 @@ public class ProbeRequest {
 		this.mac_addr = mac_addr;
 	}
 	
-	public int getSSID() {
+	public String getSSID() {
 		return SSID;
 	}
 	
-	public void setSSID(int sSID) {
+	public void setSSID(String sSID) {
 		SSID = sSID;
 	}
 	

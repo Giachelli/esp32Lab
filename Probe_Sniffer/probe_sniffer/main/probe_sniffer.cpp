@@ -396,19 +396,19 @@ static void socket_send_data(void)
 
 		size = 36 + packets_list[i]->getSsid().size();
 		send(c_fd, &size, 4, 0);
-		send(c_fd, s, 2, 0);
+		//send(c_fd, s, 2, 0);
 		send(c_fd, (uint8_t *) p->getMac(), 6, 0);
-		send(c_fd, s, 2, 0);
+		//send(c_fd, s, 2, 0);
 		send(c_fd, (char *) p->getSsid().c_str(), packets_list[i]->getSsid().size(), 0);
-		send(c_fd, s, 2, 0);
+		//send(c_fd, s, 2, 0);
 		send(c_fd, (signed *) &rssi, sizeof(signed), 0);
-		send(c_fd, s, 2, 0);
+		//send(c_fd, s, 2, 0);
 		send(c_fd, (unsigned *) &time, sizeof(unsigned), 0);
-		send(c_fd, s, 2, 0);
+		//send(c_fd, s, 2, 0);
 		send(c_fd, (int *) &hash, sizeof(int), 0);
-		send(c_fd, s, 2, 0);
+		//send(c_fd, s, 2, 0);
 		printf("\r%d packets send.", i+1);
-		send(c_fd, sp, 2, 0);
+		//send(c_fd, sp, 2, 0);
 	}
 	printf("\n");
 	//fflush(c_fd);

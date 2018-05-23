@@ -114,7 +114,7 @@ public class MySystemManager {
 				 * estrazione dei vari campi dai risultati della query
 				 */
 				String mac = rs.getString("MAC_ADDRESS");
-				int ssid = rs.getInt("SSID");
+				String ssid = rs.getString("SSID");
 				int date =rs.getInt("DATE");
 				int hash = rs.getInt("HASH");
 				int signal = rs.getInt("SIGNAL");
@@ -256,7 +256,7 @@ public class MySystemManager {
 		while (count<n_device) {
 			Socket connectionSocket = null;
 			InputStream in = null;
-			int size = 0;
+			int num_pack = 0;
 
 			try {
 
@@ -267,23 +267,49 @@ public class MySystemManager {
 
 				in.read(intData);
 				System.out.println(ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt());
-				size = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+				num_pack = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
-			byte[] buffer = new byte[4096];
-			StringBuffer pacchetti = new StringBuffer();
-			System.out.println(size);
-			int read, size_left=size;
-
 			try {
-				while ((read = in.read(buffer, 0, Math.min(buffer.length, size_left)))>0)
+				for (i = 0;i < num_pack;i++)
 				{		
-					size_left-=read;
-					System.out.println(read);
-					pacchetti.append(buffer.toString());
+					byte[] intData = new byte[4]; //buffer temporaneo per salvare tutti gli interi
+					byte[] macAddr = new byte[6]; //salva la dimensione dell'indirizzo mac
+					byte[] ssid = new byte[1024]; //salvo eventuale valore di ssid in buffer sovrallocato
+					int pack_size, ssid_size, rssi, time, hash;
+					String macAddrString, ssidString = "";
+					
+					in.read(intData);
+					pack_size = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					
+					ssid_size=pack_size-36;
+					
+					in.read(macAddr); //non necessita di conversione
+					macAddrString = String.format("%02x:%02x:%02x:%02x:%02x:%02x", macAddr[0], macAddr[1], macAddr[2], macAddr[3], macAddr[4], macAddr[5]);
+					
+					int ret=in.read(ssid, 0, ssid_size);
+					if (ret>0)
+					{
+						StringBuffer tmp=new StringBuffer();
+						for (int j=0;j<ret;j++)
+							tmp.append(String.format("%c", ssid[j]));
+						ssidString=tmp.toString();
+					}								
+					
+					in.read(intData);
+					rssi = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					
+					in.read(intData);
+					time = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+					
+					in.read(intData);
+					hash = ByteBuffer.wrap(intData).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+					ProbeRequest tmProbeRequest = new ProbeRequest(macAddrString, ssidString, time, hash, rssi, 0);
+					System.out.println(tmProbeRequest);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
