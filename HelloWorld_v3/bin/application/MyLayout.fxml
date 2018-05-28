@@ -39,7 +39,7 @@
                <content>
                   <AnchorPane>
                      <children>
-                        <GridPane fx:id="gp" prefHeight="234.0" prefWidth="387.0">
+                        <GridPane fx:id="gp" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <columnConstraints>
                               <ColumnConstraints />
                               <ColumnConstraints hgrow="SOMETIMES" maxWidth="120.0" minWidth="50.0" prefWidth="120.0" />

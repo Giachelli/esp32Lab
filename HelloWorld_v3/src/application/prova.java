@@ -94,14 +94,14 @@ public class prova implements Initializable {
 		sfondo.setVisible(false);
 		scroll.setOpacity(1.0);
 		//for(int i=0;i<mysystem.getN_device();i++) {
-			for(int i=0;i<2;i++){
+			for(int i=0;i<4;i++){
 			addESP();
 		}
 
 	}
 	private void addESP(){
 		//if(num_ESP<mysystem.getN_device()){ //4 o numero di esp rilevati
-			if(num_ESP<2) {
+			if(num_ESP<9) {
 			try {    
 				GridPane temp = getBlocco(num_ESP);
 				GridPane btn_esp = (GridPane) FXMLLoader.load(getClass().getResource("Button_esp.fxml"));
@@ -119,7 +119,7 @@ public class prova implements Initializable {
 	private GridPane getBlocco(int num_ESP)
 	{
 		GridPane result = new GridPane();
-		GridPane gp = new GridPane();
+		GridPane gp1 = new GridPane();
 		//Image image = new Image("esp32.png");
 		Label esp = new Label();
 		esp.setText("ESP_"+num_ESP);
@@ -135,11 +135,11 @@ public class prova implements Initializable {
 
 		result.add(esp, 0, 0);
 		//result.add(esp_image, 0, 0);
-		result.add(gp, 1, 0);
-		gp.add(xl, 0, 0);
-		gp.add(yl, 0, 1);
-		gp.add(xf, 1, 0);
-		gp.add(yf, 1, 1);
+		result.add(gp1, 1, 0);
+		gp1.add(xl, 0, 0);
+		gp1.add(yl, 0, 1);
+		gp1.add(xf, 1, 0);
+		gp1.add(yf, 1, 1);
 
 		ColumnConstraints c1 = new ColumnConstraints();
 		c1.setMinWidth(10);
@@ -154,10 +154,10 @@ public class prova implements Initializable {
 		r2.setMinHeight(10);
 		r2.setPrefHeight(30);
 
-		gp.getColumnConstraints().add(c1);
-		gp.getColumnConstraints().add(c2);
-		gp.getRowConstraints().add(r1);
-		gp.getRowConstraints().add(r2);
+		gp1.getColumnConstraints().add(c1);
+		gp1.getColumnConstraints().add(c2);
+		gp1.getRowConstraints().add(r1);
+		gp1.getRowConstraints().add(r2);
 
 		ColumnConstraints c11 = new ColumnConstraints();
 		c11.setMinWidth(10);
