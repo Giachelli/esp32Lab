@@ -1,0 +1,89 @@
+
+/* bubble chart properties */
+.chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+ .chart-plot-background {
+    -fx-background-color: transparent;
+}
+.chart-horizontal-grid-lines {
+    -fx-stroke: transparent;
+}
+.chart-alternative-row-fill {
+  -fx-fill: transparent;
+    -fx-stroke: transparent;
+    -fx-stroke-width: 0;
+}
+/* bubble chart series */
+.chart-bubble.series0.data0.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.bubble-legend-symbol.default-color0{
+     -fx-background-color:   #f1dd30;
+}   
+.chart-bubble.series0.data1.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data2.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data3.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+    -fx-effect: innershadow(gaussian, blue, 20, 0, 20, 20);
+}
+.chart-bubble.series0.data4.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data5.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data6.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data7.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data8.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data9.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data10.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series0.data11.default-color0 {
+    -fx-bubble-fill: #f1dd30;
+}
+.chart-bubble.series1.data0.default-color1 {
+    -fx-bubble-fill: #64dd17;
+    }
+.chart-bubble.series1.bubble-legend-symbol.default-color1{
+     -fx-background-color: #64dd17;
+}   
+.toolbar-style{
+    -fx-background-color: #3f51b5;
+}
+.anchor-pane{
+    -fx-background-color: #e0e0e0;
+}
+/* 
+.label {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+    -fx-font-family: Rajdhani;
+}
+*/    
+.green-textField{
+    color:#009688;  
+    }
+.axis-tick-mark {
+    -fx-stroke: #ff3c00;
+    -fx-stroke-width: 3; 
+}
+.axis-minor-tick-mark {
+    -fx-stroke: #f1dd30;
+        -fx-tick-label-fill: #ff3c00;
+    
+}

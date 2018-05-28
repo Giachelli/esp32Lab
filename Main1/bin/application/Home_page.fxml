@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXTextField?>
+<?import javafx.scene.chart.AreaChart?>
+<?import javafx.scene.chart.BubbleChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<!--  class=" chart-plot-background" -->
+<!-- <styleClass>
+                  <String fx:value="chart-bubble" />
+                  <String fx:value="chart-horizontal-grid-lines" />
+                  <String fx:value="chart-vertical-grid-lines" />
+                  <String fx:value="chart-alternative-row-fill" />
+                  <String fx:value="axis-minor-tick-mark" />
+                  <String fx:value="axis-tick-mark" />
+               </styleClass> -->
+
+<AnchorPane id="grafico" prefHeight="400.0" prefWidth="761.0" styleClass="anchor-pane" stylesheets="@Home_page.css" xmlns="http://javafx.com/javafx/9.0.4" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.prova2">
+   <children>
+      <ImageView fitHeight="70.0" fitWidth="144.0" layoutX="9.0" layoutY="139.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@iconaMaln.png" />
+         </image>
+      </ImageView>
+      <Pane layoutX="-11.0" layoutY="-10.0" prefHeight="110.0" prefWidth="773.0" styleClass="toolbar-style" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <Label fx:id="titolo" layoutX="115.0" layoutY="47.0" prefHeight="39.0" prefWidth="163.0" text="ESProject" textFill="WHITE">
+               <font>
+                  <Font name="System Bold Italic" size="32.0" />
+               </font></Label>
+            <ImageView fitHeight="50.0" fitWidth="50.0" layoutX="65.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@home.png" />
+               </image>
+            </ImageView>
+         </children></Pane>
+      <AnchorPane layoutX="401.0" layoutY="43.0" prefHeight="158.0" prefWidth="200.0" style="-fx-background-color: #ffff;" AnchorPane.bottomAnchor="406.0" AnchorPane.leftAnchor="401.0" AnchorPane.rightAnchor="232.0" AnchorPane.topAnchor="43.0">
+         <effect>
+            <DropShadow />
+         </effect>
+         <children>
+            <BubbleChart fx:id="grafico" layoutX="-2.0" layoutY="-3.0" prefHeight="168.0" prefWidth="429.0" stylesheets="@Home_page.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+              <xAxis>
+                <NumberAxis minorTickCount="1" side="BOTTOM" styleClass="axis" tickLabelFill="#ff3c00" tickLabelGap="1.0">
+                     <tickLabelFont>
+                        <Font name="Tahoma" size="12.0" />
+                     </tickLabelFont></NumberAxis>
+              </xAxis>
+              <yAxis>
+                <NumberAxis minorTickCount="1" prefHeight="118.0" prefWidth="27.0" side="LEFT" styleClass="axis" tickLabelFill="#ff3c00f2">
+                     <tickLabelFont>
+                        <Font name="Tahoma" size="12.0" />
+                     </tickLabelFont></NumberAxis>
+              </yAxis>
+            </BubbleChart>
+         </children>
+      </AnchorPane>
+      <AnchorPane layoutX="403.0" layoutY="396.0" prefHeight="165.0" prefWidth="200.0" AnchorPane.bottomAnchor="61.0" AnchorPane.leftAnchor="403.0" AnchorPane.rightAnchor="230.0" AnchorPane.topAnchor="396.0">
+         <effect>
+            <DropShadow />
+         </effect>
+         <children>
+            <AreaChart fx:id="grafico1" layoutX="108.0" layoutY="6.0" prefHeight="176.0" prefWidth="217.0" style="-fx-background-color: #29b6f6;" stylesheets="@Home_page.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis minorTickCount="1" side="LEFT" tickLabelFill="#ff3c00">
+                     <tickLabelFont>
+                        <Font name="Tahoma" size="12.0" />
+                     </tickLabelFont>
+                  </NumberAxis>
+              </yAxis>
+            </AreaChart>
+         </children>
+      </AnchorPane>
+      <JFXTextField fx:id="num_of_ESP" focusColor="WHITE" layoutX="79.0" layoutY="167.0" unFocusColor="#ff3c00" />
+      <JFXTextField fx:id="num_of_dispositivi" focusColor="WHITE" layoutX="79.0" layoutY="239.0" unFocusColor="#ff3c00" />
+      <ImageView fitHeight="70.0" fitWidth="144.0" layoutX="9.0" layoutY="218.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@imageMaln3_1.png" />
+         </image>
+      </ImageView>
+      <!-- <TextField layoutX="123.0" layoutY="157.0" prefHeight="28.0" prefWidth="92.0" styleClass="green-textField" text="Number device" />
+      <TextField layoutX="123.0" layoutY="110.0" prefHeight="28.0" prefWidth="92.0" styleClass="green-textField" stylesheets="@Home_page.css" text="Number Esp" />
+    -->
+   </children>
+</AnchorPane>
