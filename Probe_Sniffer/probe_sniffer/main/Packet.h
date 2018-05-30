@@ -9,6 +9,7 @@ using namespace std;
 #ifndef MAIN_PACKET_H_
 #define MAIN_PACKET_H_
 #include <string>
+#include <stdint.h>
 #include <cstring>
 #include <memory>
 #include <ctime>
@@ -18,21 +19,15 @@ private:
 	uint8_t mac_address[6];
 	string ssid;
 	signed rssi;
-	int hash;
+	unsigned hash;
 	unsigned time;
 
 public:
 
-	Packet()
-	{
-		hash = 0;
-		rssi = 0;
-		time = 0;
-	}
+	Packet():rssi(0), hash(0), time(0)
+	{}
     ~Packet()
-    {
-
-    }
+    {}
 
     //Setters
     void setMac(uint8_t mac_address[6])
@@ -47,7 +42,7 @@ public:
     {
     	this->rssi = rssi;
     }
-    void setHash(int hash)
+    void setHash(unsigned hash)
     {
     	this->hash = hash;
     }
@@ -69,7 +64,7 @@ public:
     {
     	return rssi;
     }
-    int getHash(void)
+    unsigned getHash(void)
     {
     	return hash;
     }

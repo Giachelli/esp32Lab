@@ -5,6 +5,13 @@
  *      Author: alberto
  */
 
+/*	TODO
+ * 	Led									OK
+ * 	Timestamp							OK
+ * 	Hash function						OK
+ * 	Handle disconnected event			?
+ * 	Handle IP change					?
+ */
 
 /*
  * 		Namespaces
@@ -27,6 +34,7 @@ using namespace std;
 #include "lwip/sockets.h"
 #include "driver/timer.h"
 #include "lwip/err.h"
+#include "driver/gpio.h"
 #include "Packet.h"
 
 /*
@@ -97,7 +105,10 @@ static void sniffer_on(void);
 static void sniffer_off(void);
 /* Utilities */
 static void printMac(uint8_t mac[6]);
-
+static unsigned computeHash(wifi_promiscuous_pkt_t * packet);
+/* Blink */
+static void blink_task(void *pvParameter);
+static void triple_blink();
 
 /*
  * 		Global variables
@@ -109,6 +120,8 @@ static enum modes mode = SERVER;
 static struct sockaddr_in caddr;
 static esp_err_t err;
 static bool alert = false;
+static unsigned timestamp;
+static TaskHandle_t th;
 
 /* Entry point */
 void probe_sniffer(void)
@@ -120,6 +133,10 @@ void probe_sniffer(void)
     }
     ESP_ERROR_CHECK( ret );
 
+    gpio_pad_select_gpio(GPIO_NUM_2);
+	gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
+	gpio_set_level(GPIO_NUM_2, 0);
+
     wifi_init();
 
     while(1)
@@ -127,7 +144,10 @@ void probe_sniffer(void)
     	vTaskDelay(10);
 		if(!alert)
 			continue;
-		printf("\nTimeout\n\n");
+
+
+		size_t size = xPortGetFreeHeapSize();
+		printf("\nTimeout - free memory: %u\n\n", size);
 
 		printf("Socket init\n");
 		socket_client_init();
@@ -250,13 +270,15 @@ static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type)
 
 		string s((char *) ssid->ssid, ssid->lenght);
 		p->setRssi(ctrl.rssi);
-		p->setTime(ctrl.timestamp);
+		p->setTime(xTaskGetTickCount()- timestamp);
 		p->setMac(packet->mac_address.addr2);
 		p->setSsid(s);
+		p->setHash(computeHash((wifi_promiscuous_pkt_t *)buffer));
+
 		printf("PROBE REQUEST - %d - rssi: %d timestamp: %u ", i++, p->getRssi(), p->getTime());
 		printMac(packet->mac_address.addr2);
-		printf(" ssid: %s l: %d id: %d noise: %d channel: %d\n",
-				p->getSsid().c_str(), ssid->lenght, ssid->id, ctrl.noise_floor, ctrl.channel);
+		printf(" ssid: %s l: %d hash: %u\n",
+				p->getSsid().c_str(), ssid->lenght, p->getHash());
 
 		packets_list.insert(packets_list.begin(), p);
 	}
@@ -273,8 +295,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             if(err == ESP_ERR_WIFI_SSID || err == ESP_ERR_WIFI_CONN)
             {
             	printf("Invalid SSID or Password, change on make menuconfig/Probe Sniffer Configuration.\n");
-            	printf("Current ssid: %s", CONFIG_WIFI_SSID);
-            	/* LED */
+            	printf("Current ssid: %s\n", CONFIG_WIFI_SSID);
             }
             break;
 
@@ -287,22 +308,43 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             ESP_LOGI(TAG, "Got IP: %s\n",
 			ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
 
-            if(mode == SERVER)
-				socket_receive_data();
+            gpio_set_level(GPIO_NUM_2, 1);
 
-            sniffer_on();
-			sniffer_timer_init();
+            if(mode == SERVER)
+            {
+				socket_receive_data();
+				sniffer_on();
+				sniffer_timer_init();
+            }
             break;
 
         case SYSTEM_EVENT_STA_DISCONNECTED:
             ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-            printf("Current ssid: %s\n", CONFIG_WIFI_SSID);
+            gpio_set_level(GPIO_NUM_2, 0);
+            printf("Current tried ssid: %s\n", CONFIG_WIFI_SSID);
             ESP_ERROR_CHECK(esp_wifi_connect());
-           // socket_client_init();
+            close(s_fd);
+            if(mode == CLIENT)
+            {
+            	close(c_fd);
+            	socket_client_init();
+            }
+            socket_server_tcp_init();
             break;
 
         case SYSTEM_EVENT_STA_CONNECTED:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA CONNECTED");
+			if(mode != SERVER)
+			{
+				gpio_set_level(GPIO_NUM_2, 1);
+				close(s_fd);
+				if(mode == CLIENT)
+				{
+					close(c_fd);
+					socket_client_init();
+				}
+				socket_server_tcp_init();
+			}
 			break;
 
         default:
@@ -322,8 +364,8 @@ static void sniffer_on(void)
 
 	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&sniffer_callback));
 	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
-
 	mode = SNIFFER;
+	xTaskCreate(&blink_task, "blink_task", 1024, NULL, 5, &th);
 }
 
 static void sniffer_off(void)
@@ -331,6 +373,8 @@ static void sniffer_off(void)
 	printf("Sniffer off.\n");
 	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
 	mode = CLIENT;
+	vTaskDelete(th);
+	gpio_set_level(GPIO_NUM_2, 1);
 }
 
 /* Send data to the desktop application */
@@ -340,7 +384,7 @@ static void socket_send_data(void)
 	uint32_t size = packets_list.size();
 	int i;
 
-	send(c_fd, &size, 4, 0);
+	while(send(c_fd, &size, 4, 0) == -1);	/* da sistemare, deve ripartire quando torna la connessione */
 
 	for(i = 0; i < packets_list.size(); i++)
 	{
@@ -349,18 +393,20 @@ static void socket_send_data(void)
 		unsigned time = p->getTime();
 		int hash = p->getHash();
 
-		printf("%d - Send: %s %d, %d, %d\n", i, p->getSsid().c_str(), p->getSsid().size(), p->getRssi(), p->getTime());
-
 		size = 18 + p->getSsid().size();
+
+		printf("%d - Send: %s %d, %d, %u, %u - %d\n", i, p->getSsid().c_str(), p->getSsid().size(), p->getRssi(),
+				p->getTime(), p->getHash(), size);
+
 		send(c_fd, &size, 4, 0);
 		send(c_fd, (uint8_t *) p->getMac(), 6, 0);
-		send(c_fd, (char *) p->getSsid().c_str(), packets_list[i]->getSsid().size(), 0);
+		send(c_fd, (char *) p->getSsid().c_str(), p->getSsid().size(), 0);
 		send(c_fd, (signed *) &rssi, sizeof(signed), 0);
 		send(c_fd, (unsigned *) &time, sizeof(unsigned), 0);
 		send(c_fd, (int *) &hash, sizeof(int), 0);
 	}
-	printf("%d packets send.", i+1);
-	printf("\n");
+	printf("%d packets sended.", i);
+	printf("\n\n");
 }
 
 /* Receive from desktop application */
@@ -384,6 +430,8 @@ static void socket_receive_data(void)
 
 	close(s_fd);
 
+	triple_blink();
+
 	socket_server_tcp_init();
 	conn_fd = accept(s_fd, (sockaddr*) &caddr, &l);
 	while(true)
@@ -396,11 +444,12 @@ static void socket_receive_data(void)
 		if(strcmp(buffer, "START") == 0)
 		{
 			printf("Starting..\n");
+			timestamp = xTaskGetTickCount();
 			break;
 		}
 		else if(strcmp(buffer, "LED") == 0)
 		{
-			/* Led */
+			triple_blink();
 		}
 		else
 		{
@@ -417,7 +466,7 @@ static void socket_synchronize(void)
 	char *buffer = (char*) calloc(6, sizeof(char));
 	socklen_t l = sizeof(caddr);
 
-	conn_fd = accept(s_fd, (sockaddr*) &caddr, &l);
+	while((conn_fd = accept(s_fd, (sockaddr*) &caddr, &l)) == -1);
 	while(true)
 	{
 		int ret = recv(conn_fd, buffer, 6, MSG_WAITALL);
@@ -444,15 +493,15 @@ static void socket_synchronize(void)
 		}
 		else
 		{
-			printf(buffer);
 			if(strcmp(buffer, "START") == 0)
 			{
 				printf("Re - starting..\n");
+				timestamp = xTaskGetTickCount();
 				break;
 			}
 			if(strcmp(buffer, "LED") == 0)
 			{
-				/* Led */
+				triple_blink();
 			}
 			else
 			{
@@ -476,3 +525,51 @@ static void printMac(uint8_t mac[6])
 			printf("%02X", mac[i]);
 	}
 }
+
+/* Compute packet hash */
+static unsigned computeHash(wifi_promiscuous_pkt_t * packet)
+{
+	wifi_pkt_rx_ctrl_t ctrl = packet->rx_ctrl;
+	uint8_t *payload = packet->payload;
+
+	unsigned p = 16777619;
+	unsigned hash = (int)2166136261;
+
+	for(int i = 0; i < ctrl.sig_len; i++)
+	{
+		hash = (hash ^ payload[i]) * p;
+	}
+
+	hash += hash << 13;
+	hash ^= hash >> 7;
+	hash += hash << 3;
+	hash ^= hash >> 17;
+	hash += hash << 5;
+	return hash;
+
+}
+
+/* Task for LED blinking */
+static void blink_task(void *pvParameter)
+{
+    while(1)
+    {
+        gpio_set_level(GPIO_NUM_2, 0);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        gpio_set_level(GPIO_NUM_2, 1);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+    }
+}
+
+/* Function for tiple blinking */
+static void triple_blink()
+{
+	for(int i = 0; i < 3; i++)
+	{
+		gpio_set_level(GPIO_NUM_2, 0);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			gpio_set_level(GPIO_NUM_2, 1);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+	}
+}
+
