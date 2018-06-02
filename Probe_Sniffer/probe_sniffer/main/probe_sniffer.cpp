@@ -9,8 +9,8 @@
  * 	Led									OK
  * 	Timestamp							OK
  * 	Hash function						OK
- * 	Handle disconnected event			?
- * 	Handle IP change					?
+ * 	Handle disconnected event			OK
+ * 	Handle IP change					Static IP desktop
  */
 
 /*
@@ -148,10 +148,10 @@ void probe_sniffer(void)
 
 		size_t size = xPortGetFreeHeapSize();
 		printf("\nTimeout - free memory: %u\n\n", size);
+		sniffer_off();
 
 		printf("Socket init\n");
 		socket_client_init();
-		sniffer_off();
 		socket_send_data();
 		printf("Close socket\n");
 		close(c_fd);
@@ -214,13 +214,55 @@ static void socket_server_tcp_init(void)
 static void socket_client_init(void)
 {
 	c_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(c_fd == -1)
+	{
+		switch(errno)
+		{
+			case EBADF:
+				printf("Err: EBADF");
+				break;
+			case ENOTSOCK:
+				printf("Err: ENOTSOCK");
+				break;
+			case EWOULDBLOCK:
+				printf("Err: EWOULDBLOCK");
+				break;
+			case EINTR:
+				printf("Err: EINTR");
+				break;
+			case ENOTCONN:
+				printf("Err: ENOTCONN");
+				break;
+		}
+	}
 	caddr.sin_port = htons(1500);
 	struct sockaddr_in addr;
 	bzero(&addr, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(1500);
 	addr.sin_addr.s_addr = caddr.sin_addr.s_addr;
-	connect(c_fd, (sockaddr *) &addr, sizeof(addr));
+	int ret = connect(c_fd, (sockaddr *) &addr, sizeof(addr));
+	if(ret == -1)
+	{
+		switch(errno)
+		{
+			case EBADF:
+				printf("Err: EBADF");
+				break;
+			case ENOTSOCK:
+				printf("Err: ENOTSOCK");
+				break;
+			case EWOULDBLOCK:
+				printf("Err: EWOULDBLOCK");
+				break;
+			case EINTR:
+				printf("Err: EINTR");
+				break;
+			case ENOTCONN:
+				printf("Err: ENOTCONN");
+				break;
+		}
+	}
 }
 
 /* Initialize timer */
@@ -384,7 +426,11 @@ static void socket_send_data(void)
 	uint32_t size = packets_list.size();
 	int i;
 
-	while(send(c_fd, &size, 4, 0) == -1);	/* da sistemare, deve ripartire quando torna la connessione */
+	while(send(c_fd, &size, 4, 0) == -1)
+	{
+		close(c_fd);
+		socket_client_init();
+	}
 
 	for(i = 0; i < packets_list.size(); i++)
 	{
@@ -466,7 +512,12 @@ static void socket_synchronize(void)
 	char *buffer = (char*) calloc(6, sizeof(char));
 	socklen_t l = sizeof(caddr);
 
-	while((conn_fd = accept(s_fd, (sockaddr*) &caddr, &l)) == -1);
+	while((conn_fd = accept(s_fd, (sockaddr*) &caddr, &l)) == -1)
+	{
+		close(s_fd);
+		socket_server_tcp_init();
+	}
+
 	while(true)
 	{
 		int ret = recv(conn_fd, buffer, 6, MSG_WAITALL);
