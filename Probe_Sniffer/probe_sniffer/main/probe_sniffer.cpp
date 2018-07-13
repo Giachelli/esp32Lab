@@ -6,11 +6,10 @@
  */
 
 /*	TODO
- * 	Led									OK
- * 	Timestamp							OK
- * 	Hash function						OK
- * 	Handle disconnected event			OK
+ *s
+ *s
  * 	Handle IP change					Static IP desktop
+ * 	Mutex
  */
 
 /*
@@ -23,6 +22,7 @@ using namespace std;
  * 		Includes
  */
 #include <memory>
+
 #include <vector>
 #include "esp_wifi.h"
 #include "esp_log.h"
@@ -106,6 +106,7 @@ static void sniffer_off(void);
 /* Utilities */
 static void printMac(uint8_t mac[6]);
 static unsigned computeHash(wifi_promiscuous_pkt_t * packet);
+static void swap_list();
 /* Blink */
 static void blink_task(void *pvParameter);
 static void triple_blink();
@@ -115,6 +116,7 @@ static void triple_blink();
  */
 static const char *TAG = "probe_sniffer";
 static vector<Packet*> packets_list;
+static vector<Packet*> packets_list_to_send;
 static int s_fd, c_fd, conn_fd, i = 0;
 static enum modes mode = SERVER;
 static struct sockaddr_in caddr;
@@ -122,6 +124,7 @@ static esp_err_t err;
 static bool alert = false;
 static unsigned timestamp;
 static TaskHandle_t th;
+static SemaphoreHandle_t m;
 
 /* Entry point */
 void probe_sniffer(void)
@@ -137,6 +140,8 @@ void probe_sniffer(void)
 	gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
 	gpio_set_level(GPIO_NUM_2, 0);
 
+	m = xSemaphoreCreateMutex();
+
     wifi_init();
 
     while(1)
@@ -145,11 +150,10 @@ void probe_sniffer(void)
 		if(!alert)
 			continue;
 
-
+		swap_list();
 		size_t size = xPortGetFreeHeapSize();
 		printf("\nTimeout - free memory: %u\n\n", size);
 		sniffer_off();
-
 		printf("Socket init\n");
 		socket_client_init();
 		socket_send_data();
@@ -302,6 +306,7 @@ static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type)
 	struct wifi_packet_t *packet;
 	struct ssid_t *ssid;
 
+
 	ctrl = ((wifi_promiscuous_pkt_t *)buffer)->rx_ctrl;
 	packet = (wifi_packet_t*)((wifi_promiscuous_pkt_t *)buffer)->payload;
 
@@ -322,7 +327,11 @@ static void sniffer_callback(void *buffer, wifi_promiscuous_pkt_type_t type)
 		printf(" ssid: %s l: %d hash: %u\n",
 				p->getSsid().c_str(), ssid->lenght, p->getHash());
 
-		packets_list.insert(packets_list.begin(), p);
+		//while(xSemaphoreTake(m, (TickType_t) 10) != pdTRUE)
+		//{
+			packets_list.insert(packets_list.begin(), p);
+			//xSemaphoreGive(m);
+		//}
 	}
 }
 
@@ -355,6 +364,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             if(mode == SERVER)
             {
 				socket_receive_data();
+				ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&sniffer_callback));
+				ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
 				sniffer_on();
 				sniffer_timer_init();
             }
@@ -399,13 +410,10 @@ static void sniffer_on(void)
 {
 	printf("Sniffer on.\n");
 
-	for(int i = 0; i < packets_list.size(); i++)
-		delete packets_list[i];
+	for(int i = 0; i < packets_list_to_send.size(); i++)
+		delete packets_list_to_send[i];
 
-	packets_list.clear();
-
-	ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&sniffer_callback));
-	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+	packets_list_to_send.clear();
 	mode = SNIFFER;
 	xTaskCreate(&blink_task, "blink_task", 1024, NULL, 5, &th);
 }
@@ -413,7 +421,6 @@ static void sniffer_on(void)
 static void sniffer_off(void)
 {
 	printf("Sniffer off.\n");
-	ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
 	mode = CLIENT;
 	vTaskDelete(th);
 	gpio_set_level(GPIO_NUM_2, 1);
@@ -422,8 +429,8 @@ static void sniffer_off(void)
 /* Send data to the desktop application */
 static void socket_send_data(void)
 {
-	printf("\nSEND DATA, size: %d\n\n", packets_list.size());
-	uint32_t size = packets_list.size();
+	printf("\nSEND DATA, size: %d\n\n", packets_list_to_send.size());
+	uint32_t size = packets_list_to_send.size();
 	int i;
 
 	while(send(c_fd, &size, 4, 0) == -1)
@@ -432,9 +439,9 @@ static void socket_send_data(void)
 		socket_client_init();
 	}
 
-	for(i = 0; i < packets_list.size(); i++)
+	for(i = 0; i < packets_list_to_send.size(); i++)
 	{
-		Packet *p = packets_list[i];
+		Packet *p = packets_list_to_send[i];
 		signed rssi = p->getRssi();
 		unsigned time = p->getTime();
 		int hash = p->getHash();
@@ -554,6 +561,10 @@ static void socket_synchronize(void)
 			{
 				triple_blink();
 			}
+			if(strcmp(buffer, "RESET") == 0)
+			{
+				esp_restart();
+			}
 			else
 			{
 				printf("Packet format not recognized.\n");
@@ -598,6 +609,16 @@ static unsigned computeHash(wifi_promiscuous_pkt_t * packet)
 	hash += hash << 5;
 	return hash;
 
+}
+
+/* Atomically swap packets with packets_to_send */
+static void swap_list()
+{
+	//while(xSemaphoreTake(m, (TickType_t) 10) != pdTRUE)
+	//{
+		swap(packets_list, packets_list_to_send);
+		xSemaphoreGive(m);
+	//}
 }
 
 /* Task for LED blinking */
